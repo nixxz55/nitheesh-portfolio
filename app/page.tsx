@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { Canvas } from "@react-three/fiber";
 import { ContactShadows, Environment } from "@react-three/drei";
 import { CameraRig, LabEnvironment, RobotArm } from "./components/RoboticsLab";
@@ -67,7 +68,7 @@ export default function Home() {
 
   return <main className="lab-shell" onTouchStart={(event) => { touchStart.current = event.touches[0].clientY; }} onTouchEnd={(event) => { if (touchStart.current === null) return; const delta = touchStart.current - event.changedTouches[0].clientY; if (Math.abs(delta) > 36) moveStation(delta > 0 ? 1 : -1); touchStart.current = null; }}>
     <div className="scene-frame" aria-hidden="true"><Canvas shadows dpr={[1, 1.6]} camera={{ position: [7.8, 6.6, 8.2], fov: 50, near: 0.1, far: 40 }} fallback={null} onCreated={() => setIsReady(true)}><color attach="background" args={["#101315"]} /><fog attach="fog" args={["#101315", 12, 27]} /><ambientLight intensity={0.55} /><directionalLight castShadow position={[4, 9, 3]} intensity={2.2} color="#fff0d4" shadow-mapSize={[1024, 1024]} shadow-bias={-0.0002} /><spotLight position={[0, 7.5, 1]} angle={0.48} penumbra={0.72} intensity={45} distance={14} color="#f4dfb9" castShadow /><pointLight position={[-4, 5, 1]} intensity={16} distance={10} color="#da8c3d" /><Environment preset="warehouse" /><CameraRig station={station} /><LabEnvironment station={station} /><RobotArm station={station} /><ContactShadows position={[0, 0.02, 0]} opacity={0.48} scale={16} blur={2.6} far={8} /></Canvas></div>
-    <header className="lab-header"><span className="brand-mark">NK / R&amp;D</span><span className="status"><i /> SYSTEM ONLINE</span><span className="header-note">ROBOTICS &amp; AUTOMATION / 2026</span></header>
+    <header className="lab-header"><span className="brand-mark">NK / R&amp;D</span><span className="status"><i /> SYSTEM ONLINE</span><Link className="lab-entry-link" href="/robotics-lab">ROBOTICS LAB<span aria-hidden="true">↗</span></Link><span className="header-note">ROBOTICS &amp; AUTOMATION / 2026</span></header>
     <nav className="station-nav" aria-label="Laboratory stations"><span className="nav-caption">STATIONS</span>{stations.map((item) => <button key={item.id} className={item.id === station ? "active" : ""} onClick={() => setStation(item.id)} aria-label={`Go to ${item.label}`} aria-current={item.id === station ? "step" : undefined}><span>{item.code}</span>{item.label}</button>)}</nav>
     <section className={`station-copy ${isReady ? "is-ready" : ""}`} aria-live="polite"><p className="eyebrow">{stationContent[station].eyebrow}</p><h1>{stationContent[station].title}</h1><p className="body-copy">{stationContent[station].body}</p>{station === "contact" && <div className="contact-links" aria-label="Contact links">{contactLinks.map((link) => <a key={link.label} href={link.href} target={link.external ? "_blank" : undefined} rel={link.external ? "noreferrer" : undefined}>{link.label}<span aria-hidden="true">↗</span></a>)}</div>}<p className="meta-copy">{stationContent[station].meta}</p></section>
     <div className="corner-readout"><span>08.00 X 07.00 M</span><span>NO DIGITAL TWIN CLAIM</span></div><div className="scroll-cue"><span className="scroll-line" /><span>SCROLL / SWIPE</span></div>

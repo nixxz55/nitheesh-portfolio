@@ -1,0 +1,210 @@
+.experience {
+  --jr-bg: #101414;
+  --jr-panel: rgba(17, 21, 20, .88);
+  --jr-ink: #f0ede3;
+  --jr-muted: #c2c5bb;
+  --jr-faint: #a1a89c;
+  --jr-amber: #d19a5f;
+  --jr-line: rgba(225, 218, 201, .25);
+  position: fixed;
+  z-index: 30;
+  inset: 0;
+  overflow: hidden;
+  background: var(--jr-bg);
+  color: var(--jr-ink);
+  font-family: "Courier New", monospace;
+  isolation: isolate;
+}
+
+.experience * { box-sizing: border-box; }
+.experience a { color: inherit; }
+.experience button:focus-visible, .experience a:focus-visible { outline: 2px solid var(--jr-amber); outline-offset: 3px; }
+
+.canvasFrame { position: absolute; inset: 0; z-index: -2; background: #121515; }
+.canvasFrame canvas { display: block; width: 100% !important; height: 100% !important; }
+.sceneVignette { position: absolute; z-index: -1; inset: 0; background: linear-gradient(90deg, rgba(7, 10, 10, .26), transparent 42%, rgba(7, 10, 10, .18)), linear-gradient(0deg, rgba(7, 10, 10, .46), transparent 26%, rgba(7, 10, 10, .12)); pointer-events: none; }
+.webglFallback { position: absolute; inset: 0; display: grid; place-items: center; padding: 28px; background: #161b19; color: var(--jr-ink); font: 13px/1.7 "Trebuchet MS", sans-serif; text-align: center; }
+
+.topBar, .titleIntro, .statusPanel, .detectionPanel, .roverSystemPanel, .controls, .sceneReadout { position: absolute; z-index: 1; }
+.topBar { top: 22px; right: 30px; left: 30px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.wordmark { display: flex; align-items: center; gap: 12px; color: var(--jr-ink); font-size: 10px; font-weight: 600; letter-spacing: .15em; }
+.wordmark span:first-child { border: 1px solid rgba(196, 135, 72, .6); padding: 7px 8px; color: var(--jr-amber); }
+.simulationTag { display: flex; align-items: center; gap: 8px; border: 1px solid var(--jr-line); padding: 8px 10px; background: rgba(14, 18, 17, .82); color: #d2d3c9; font-size: 9px; font-weight: 600; letter-spacing: .12em; }
+.simulationTag i, .statusRow b i, .detectionEyebrow i { width: 6px; height: 6px; flex: 0 0 6px; border-radius: 50%; background: #9a9c75; }
+
+.titleIntro { top: 23%; left: 7.5%; max-width: 570px; border-left: 1px solid rgba(209, 154, 95, .8); padding: 10px 16px 10px 20px; background: linear-gradient(90deg, rgba(12, 15, 14, .82), rgba(12, 15, 14, .28) 78%, transparent); opacity: 1; transform: translateY(0); transition: opacity .8s ease, transform .8s ease; pointer-events: none; }
+.titleVisible { opacity: 1; transform: translateY(0); }
+.titleDismissed { opacity: 0; transform: translateY(-8px); }
+.titleHiddenNow { visibility: hidden; opacity: 0; transition: none; }
+.titleIntro > p { margin: 0 0 11px; color: #e5e1d5; font-size: 11px; font-weight: 600; letter-spacing: .2em; }
+.titleIntro h1 { margin: 0; color: #f2efe6; font-family: Georgia, serif; font-size: 32px; font-weight: 400; letter-spacing: 0; line-height: 1.2; }
+.titleIntro > span { display: block; margin-top: 14px; color: #d0d0c4; font-size: 9px; font-weight: 600; letter-spacing: .15em; }
+.titleIntro > span b { padding: 0 5px; color: var(--jr-amber); font-weight: 400; }
+
+.statusPanel { top: 84px; right: 30px; width: 270px; border-left: 1px solid rgba(209, 154, 95, .72); padding: 15px 16px 12px; background: rgba(14, 18, 17, .94); }
+.panelEyebrow { margin: 0 0 13px; color: #e0ad73; font-size: 9px; font-weight: 600; letter-spacing: .14em; }
+.statusRow { display: flex; min-height: 35px; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px solid rgba(225, 218, 201, .16); color: #d1d3c9; font-size: 9px; font-weight: 600; letter-spacing: .06em; }
+.statusRow b { display: inline-flex; align-items: center; gap: 6px; color: #f0ede3; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.statusRow b small { color: #e0ad73; font-size: 9px; }
+.statusRow b i { background: #8c9b82; }
+.statusRow .inspecting { color: #bdc1b2; }
+.routeScale { position: relative; display: flex; justify-content: space-between; margin-top: 12px; padding-top: 12px; color: #d0d0c5; font-size: 9px; font-weight: 600; }
+.routeScale::before { position: absolute; top: 3px; right: 3px; left: 3px; height: 1px; background: rgba(196, 135, 72, .52); content: ""; }
+.routeScale > i { position: absolute; top: 0; left: 66.6%; width: 6px; height: 6px; border: 1px solid #171a18; border-radius: 50%; background: var(--jr-amber); }
+.simulationNote { margin: 12px 0 0; color: #b5baaf; font-size: 8px; font-weight: 600; letter-spacing: .06em; }
+
+.detectionPanel { bottom: 85px; left: 30px; width: min(410px, calc(100% - 60px)); border: 1px solid rgba(209, 154, 95, .52); border-top: 2px solid #c17a4c; padding: 17px 19px 15px; background: rgba(14, 18, 17, .96); box-shadow: 0 10px 34px rgba(0, 0, 0, .26); animation: panelEnter .25s ease-out both; }
+.detectionEyebrow { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; color: #e0a276; font-size: 9px; font-weight: 600; letter-spacing: .11em; }
+.detectionEyebrow i { background: #ca7245; }
+.detectionPanel h2 { margin: 0; color: #f2eee2; font: 20px/1.25 Georgia, serif; letter-spacing: 0; }
+.detectionName { margin: 7px 0 14px; color: #c7c9be; font-size: 9px; font-weight: 600; letter-spacing: .09em; }
+.detectionPanel dl { margin: 0; border-top: 1px solid var(--jr-line); }
+.detectionPanel dl > div { display: grid; grid-template-columns: 104px 1fr; gap: 10px; border-bottom: 1px solid rgba(225, 218, 201, .14); padding: 8px 0; font-size: 9px; line-height: 1.45; }
+.detectionPanel dt { color: #b6bdb2; font-weight: 600; }
+.detectionPanel dd { margin: 0; color: #eeeae0; font-weight: 600; }
+.detectionPanel dd span { margin-left: 5px; color: #c5b394; font-size: 8px; }
+.detectionCaveat { margin: 12px 0 0; color: #c1c5ba; font: 11px/1.55 "Trebuchet MS", sans-serif; }
+
+.roverSystemPanel { right: 30px; bottom: 88px; width: 292px; border-left: 1px solid rgba(209, 154, 95, .72); padding: 13px 14px 12px; background: rgba(14, 18, 17, .95); }
+.roverSystemPanel h2 { margin: 0 0 11px; color: #f0ede3; font: 15px/1.2 Georgia, serif; letter-spacing: 0; }
+.roverPartGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; }
+.roverPartGrid button { min-height: 30px; border: 1px solid rgba(225, 218, 201, .18); padding: 7px 8px; background: rgba(32, 39, 36, .82); color: #d0d3c8; cursor: pointer; font: 8px "Courier New", monospace; font-weight: 600; letter-spacing: .04em; text-align: left; }
+.roverPartGrid button:hover, .roverPartGrid .activeRoverPart { border-color: rgba(209, 154, 95, .72); background: rgba(110, 80, 48, .28); color: #f0e0c6; }
+.roverPartDescription { margin-top: 10px; border-top: 1px solid var(--jr-line); padding-top: 9px; }
+.roverPartDescription h3 { margin: 0 0 4px; color: #e3b57e; font: 10px "Courier New", monospace; font-weight: 600; }
+.roverPartDescription p { margin: 0; color: #d0d2c8; font: 11px/1.45 "Trebuchet MS", sans-serif; }
+.roverTooltip { width: 214px; border: 1px solid rgba(209, 154, 95, .58); border-left: 2px solid var(--jr-amber); padding: 9px 11px; background: rgba(13, 17, 16, .96); color: #f0ede3; box-shadow: 0 5px 20px rgba(0, 0, 0, .3); font-family: "Courier New", monospace; }
+.roverTooltip span { display: block; margin-bottom: 4px; color: #e4b77f; font-size: 9px; font-weight: 600; letter-spacing: .08em; }
+.roverTooltip p { margin: 0; color: #d4d6cc; font: 11px/1.45 "Trebuchet MS", sans-serif; }
+.roverHotspot { display: grid; width: 15px; height: 15px; place-items: center; border: 1px solid rgba(218, 177, 121, .74); border-radius: 50%; padding: 0; background: rgba(18, 23, 21, .76); cursor: pointer; }
+.roverHotspot > span { width: 4px; height: 4px; border-radius: 50%; background: #e2bc83; }
+.roverHotspot:hover, .roverHotspot[aria-pressed="true"] { border-color: #f0c98d; background: rgba(153, 112, 62, .45); }
+.roverHotspot:hover > span, .roverHotspot[aria-pressed="true"] > span { background: #f1d4a5; }
+
+.controls { right: 30px; bottom: 25px; display: flex; align-items: center; gap: 17px; }
+.modeControls { display: flex; border: 1px solid var(--jr-line); background: rgba(15, 19, 18, .9); }
+.modeControls button { min-width: 82px; border: 0; border-right: 1px solid var(--jr-line); padding: 12px 11px; background: transparent; color: #c4c8bd; cursor: pointer; font: 9px "Courier New", monospace; font-weight: 600; letter-spacing: .1em; }
+.modeControls button:last-child { border-right: 0; }
+.roverModeSecond { display: inline; }
+.modeControls button:hover, .modeControls .activeMode { background: rgba(196, 135, 72, .12); color: #e3d8c4; }
+.modeControls .activeMode { box-shadow: inset 0 -2px 0 var(--jr-amber); }
+.backLink { border-bottom: 1px solid rgba(209, 154, 95, .7); padding: 0 0 7px; color: #f0ede3; font-size: 9px; font-weight: 600; letter-spacing: .1em; text-decoration: none; white-space: nowrap; }
+.backLink span { margin-left: 7px; color: var(--jr-amber); }
+.backLink:hover { color: var(--jr-amber) !important; }
+.sceneReadout { bottom: 32px; left: 30px; display: flex; gap: 18px; color: #c0c5b9; font-size: 8px; font-weight: 600; letter-spacing: .12em; pointer-events: none; }
+
+@keyframes panelEnter { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+@media (max-width: 760px) {
+  .topBar { top: 14px; right: 15px; left: 15px; }
+  .wordmark { gap: 8px; font-size: 9px; }
+  .wordmark span:first-child { padding: 6px; }
+  .simulationTag { padding: 7px; font-size: 8px; }
+  .titleIntro { top: auto; bottom: 145px; left: 18px; max-width: calc(100% - 36px); padding-left: 14px; }
+  .titleIntro h1 { font-size: 25px; }
+  .statusPanel { top: 76px; right: 15px; width: 232px; padding: 11px 12px 10px; }
+  .panelEyebrow { margin-bottom: 9px; }
+  .statusRow { min-height: 31px; font-size: 8px; }
+  .statusRow b { font-size: 10px; }
+  .routeScale { margin-top: 10px; padding-top: 10px; font-size: 8px; }
+  .simulationNote { font-size: 7px; }
+  .detectionPanel { bottom: 105px; left: 15px; width: min(360px, calc(100% - 30px)); padding: 13px 14px 12px; }
+  .detectionPanel h2 { font-size: 18px; }
+  .controls { right: 15px; bottom: 15px; left: 15px; display: grid; grid-template-columns: 1fr; justify-items: stretch; gap: 8px; }
+  .modeControls { width: 100%; }
+  .modeControls button { min-width: 0; flex: 1 1 0; padding: 11px 5px; font-size: 7px; letter-spacing: .05em; }
+  .roverModeSecond { display: block; }
+  .backLink { justify-self: end; font-size: 8px; }
+  .roverSystemPanel { right: 15px; bottom: 108px; left: 15px; width: auto; padding: 11px 12px 10px; }
+  .roverSystemPanel h2 { margin-bottom: 8px; font-size: 14px; }
+  .roverPartGrid { gap: 3px; }
+  .roverPartGrid button { min-height: 28px; padding: 6px 7px; font-size: 7px; }
+  .roverTooltip { width: 190px; padding: 8px 9px; }
+  .sceneReadout { bottom: 75px; left: 16px; gap: 11px; font-size: 7px; }
+}
+
+@media (max-width: 380px) {
+  .simulationTag { max-width: 150px; font-size: 7px; }
+  .titleIntro { bottom: 145px; padding: 8px 12px 8px 12px; }
+  .titleIntro > p { margin-bottom: 6px; font-size: 9px; }
+  .titleIntro h1 { font-size: 19px; line-height: 1.16; }
+  .titleIntro > span { margin-top: 8px; font-size: 8px; }
+  .statusPanel { top: 70px; width: 218px; padding: 8px 9px 7px; }
+  .panelEyebrow { margin-bottom: 7px; font-size: 8px; }
+  .statusRow { min-height: 24px; font-size: 7px; }
+  .statusRow b { font-size: 9px; }
+  .statusRow b small { font-size: 8px; }
+  .routeScale { margin-top: 7px; padding-top: 8px; font-size: 7px; }
+  .simulationNote { margin-top: 7px; font-size: 6px; }
+  .detectionPanel { bottom: 88px; left: 10px; width: calc(100% - 20px); padding: 10px 11px 9px; }
+  .detectionEyebrow { gap: 6px; margin-bottom: 6px; font-size: 7px; }
+  .detectionPanel h2 { font-size: 16px; }
+  .detectionName { margin: 4px 0 7px; font-size: 8px; }
+  .detectionPanel dl > div { grid-template-columns: 74px 1fr; gap: 6px; padding: 4px 0; font-size: 8px; line-height: 1.3; }
+  .detectionPanel dd { white-space: nowrap; }
+  .detectionPanel dd span { font-size: 7px; }
+  .detectionCaveat { margin-top: 7px; font-size: 9px; line-height: 1.35; }
+  .controls { gap: 8px; }
+  .controls { bottom: 10px; }
+  .roverSystemPanel { bottom: 94px; padding: 9px 10px 8px; }
+  .roverPartGrid button { min-height: 25px; padding: 5px 6px; font-size: 6px; }
+  .roverPartDescription { margin-top: 7px; padding-top: 6px; }
+  .roverPartDescription p { font-size: 9px; }
+  .roverTooltip { width: 174px; }
+  .backLink { font-size: 7px; }
+  .sceneReadout { display: none; }
+}
+
+@media (max-height: 620px) and (min-width: 761px) {
+  .titleIntro { top: 20%; max-width: min(570px, calc(100vw - 430px)); }
+  .statusPanel { top: 71px; }
+  .detectionPanel { bottom: 75px; }
+  .controls { bottom: 17px; }
+  .sceneReadout { bottom: 23px; }
+}
+
+@media (max-width: 520px) and (max-height: 620px) {
+  .titleIntro { top: 76px; right: 18px; bottom: auto; left: 18px; max-width: none; padding: 8px 12px; }
+  .titleIntro > p { margin-bottom: 6px; font-size: 9px; }
+  .titleIntro h1 { font-size: 21px; line-height: 1.15; }
+  .titleIntro > span { margin-top: 8px; font-size: 8px; }
+  .statusPanel { top: 246px; right: 15px; left: 15px; width: auto; padding: 8px 9px 7px; }
+  .panelEyebrow { margin-bottom: 7px; font-size: 8px; }
+  .statusRow { min-height: 24px; font-size: 8px; }
+  .statusRow b { font-size: 9px; }
+  .routeScale { margin-top: 7px; padding-top: 8px; font-size: 8px; }
+  .simulationNote { margin-top: 7px; font-size: 6px; }
+  .detectionPanel { bottom: 78px; left: 10px; width: calc(100% - 20px); padding: 10px 11px 9px; }
+  .detectionEyebrow { gap: 6px; margin-bottom: 6px; font-size: 7px; }
+  .detectionPanel h2 { font-size: 16px; }
+  .detectionName { margin: 4px 0 7px; font-size: 8px; }
+  .detectionPanel dl > div { grid-template-columns: 74px 1fr; gap: 6px; padding: 4px 0; font-size: 8px; line-height: 1.3; }
+  .detectionPanel dd { white-space: nowrap; }
+  .detectionPanel dd span { font-size: 7px; }
+  .detectionCaveat { margin-top: 7px; font-size: 9px; line-height: 1.35; }
+  .experience[data-detection-active="true"] .titleIntro { visibility: hidden; }
+  .experience[data-detection-active="true"] .statusPanel { top: 70px; right: 15px; left: auto; width: 218px; }
+  .controls { bottom: 10px; }
+  .sceneReadout { display: none; }
+}
+
+@media (min-width: 521px) and (max-width: 760px) and (max-height: 620px) {
+  .titleIntro { top: 76px; bottom: auto; left: 18px; max-width: calc(100vw - 280px); }
+  .statusPanel { top: 76px; }
+  .detectionPanel { bottom: 78px; left: 15px; width: calc(100% - 280px); padding: 10px 11px 9px; }
+  .detectionEyebrow { gap: 6px; margin-bottom: 6px; font-size: 7px; }
+  .detectionPanel h2 { font-size: 16px; }
+  .detectionName { margin: 4px 0 7px; font-size: 8px; }
+  .detectionPanel dl > div { grid-template-columns: 74px 1fr; gap: 6px; padding: 4px 0; font-size: 8px; line-height: 1.3; }
+  .detectionPanel dd { white-space: nowrap; }
+  .detectionPanel dd span { font-size: 7px; }
+  .detectionCaveat { margin-top: 7px; font-size: 9px; line-height: 1.35; }
+  .controls { bottom: 10px; }
+  .sceneReadout { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .titleIntro { transition: none; }
+  .detectionPanel { animation: none; }
+  .experience *, .experience *::before, .experience *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
+}

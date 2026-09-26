@@ -2,9 +2,12 @@
 
 import { useFrame } from "@react-three/fiber";
 import { Cylinder, Line, RoundedBox, Text } from "@react-three/drei";
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import * as THREE from "three";
+import WeldingArc from "./WeldingArc";
+import WeldingWorkcell from "./WeldingWorkcell";
+import type { WorkcellStatus } from "./WeldingWorkcell";
 
 export type Station = "arrival" | "about" | "focus" | "work" | "contact" | "overview";
 
@@ -134,9 +137,77 @@ const jointLimits: Array<Omit<JointState, "current" | "velocity">> = [
   { min: -1.1, max: 0.2, speed: 0.48, acceleration: 1.05 },
   { min: 0.18, max: 1.35, speed: 0.58, acceleration: 1.2 },
   { min: -1.2, max: 1.2, speed: 0.9, acceleration: 1.8 },
-  { min: -0.95, max: 0.65, speed: 0.75, acceleration: 1.55 },
+  { min: -1.6, max: 0.65, speed: 0.75, acceleration: 1.55 },
   { min: -1.4, max: 1.4, speed: 1.1, acceleration: 2.2 },
 ];
+
+type JointPose = [number, number, number, number, number, number];
+type PoseName = "approach" | "position" | "weldStart" | "weldEnd" | "retract" | "inspection";
+type CyclePoseName = "home" | PoseName;
+
+const processPoses: Record<PoseName, JointPose> = {
+  approach: [-1.54, -0.78, 0.47, 0.05, -0.72, 0.04],
+  position: [-1.59, -0.87, 0.38, 0.02, -1.02, 0],
+  weldStart: [-1.65, -0.935, 0.343, -0.022, -1.2, -0.008],
+  weldEnd: [-1.511, -0.935, 0.343, 0.056, -1.2, 0.008],
+  retract: [-1.53, -0.78, 0.45, -0.12, -0.68, 0.04],
+  inspection: [-1.22, -0.63, 0.64, 0.36, -0.56, 0.14],
+};
+
+type WorkPhase = { mode: string; status: string; duration: number; from: CyclePoseName; to: CyclePoseName; welding?: boolean };
+
+const weldCycle: WorkPhase[] = [
+  { mode: "STANDBY", status: "READY", duration: 2.6, from: "home", to: "home" },
+  { mode: "APPROACH", status: "MOVING", duration: 2.1, from: "home", to: "approach" },
+  { mode: "POSITION", status: "ALIGNING", duration: 1.25, from: "approach", to: "position" },
+  { mode: "POSITION", status: "ALIGNED", duration: 0.7, from: "position", to: "weldStart" },
+  { mode: "WELDING", status: "ACTIVE", duration: 4.8, from: "weldStart", to: "weldEnd", welding: true },
+  { mode: "RESET", status: "RETRACTING", duration: 1.15, from: "weldEnd", to: "retract" },
+  { mode: "INSPECTION", status: "ACTIVE", duration: 1.45, from: "retract", to: "inspection" },
+  { mode: "RESET", status: "RETURNING HOME", duration: 2.05, from: "inspection", to: "home" },
+  { mode: "STANDBY", status: "READY", duration: 1.6, from: "home", to: "home" },
+];
+
+function poseFor(name: CyclePoseName, home: JointPose): JointPose {
+  return name === "home" ? home : processPoses[name];
+}
+
+function interpolatePose(start: JointPose, end: JointPose, amount: number): JointPose {
+  return start.map((value, index) => {
+    const delta = Math.atan2(Math.sin(end[index] - value), Math.cos(end[index] - value));
+    return value + delta * amount;
+  }) as JointPose;
+}
+
+function applyRobotPose(axes: [THREE.Group | null, THREE.Group | null, THREE.Group | null, THREE.Group | null, THREE.Group | null, THREE.Group | null], angles: JointPose) {
+  const [baseJoint, axis2, axis3, axis4, axis5, axis6] = axes;
+  if (!baseJoint || !axis2 || !axis3 || !axis4 || !axis5 || !axis6) return;
+  baseJoint.rotation.y = angles[0];
+  axis2.rotation.z = angles[1];
+  axis3.rotation.z = angles[2];
+  axis4.rotation.y = angles[3];
+  axis5.rotation.z = angles[4];
+  axis6.rotation.y = angles[5];
+}
+
+function publishWorkcellStatus(statusKey: { current: string }, updateStatus: (status: WorkcellStatus) => void, status: WorkcellStatus) {
+  const key = `${status.mode}/${status.status}`;
+  if (statusKey.current === key) return;
+  statusKey.current = key;
+  updateStatus(status);
+}
+
+function WeldingTorch({ active, reducedMotion }: { active: boolean; reducedMotion: boolean }) {
+  return <group position={[0, 0.1, 0]} rotation={[0, 0, -0.85]}>
+    <mesh position={[0, 0.06, 0]}><cylinderGeometry args={[0.14, 0.17, 0.18, 16]} /><meshStandardMaterial color="#555c56" metalness={0.82} roughness={0.36} /></mesh>
+    <RoundedBox args={[0.2, 0.28, 0.18]} radius={0.04} smoothness={3} position={[0, 0.25, 0]} castShadow><meshStandardMaterial color="#3b433f" metalness={0.78} roughness={0.38} /></RoundedBox>
+    <mesh position={[0, 0.47, 0]}><cylinderGeometry args={[0.105, 0.06, 0.22, 14]} /><meshStandardMaterial color="#a97949" metalness={0.78} roughness={0.33} /></mesh>
+    <mesh position={[0, 0.59, 0]}><cylinderGeometry args={[0.047, 0.047, 0.08, 12]} /><meshStandardMaterial color="#d1c6ad" metalness={0.86} roughness={0.28} /></mesh>
+    <Line points={[[0.11, 0.16, 0.05], [0.17, 0.27, 0.08], [0.14, 0.36, 0.07]]} color="#242a27" lineWidth={3.2} />
+    <Line points={[[0.11, 0.16, 0.05], [0.17, 0.27, 0.08], [0.14, 0.36, 0.07]]} color="#777a71" lineWidth={0.9} />
+    <WeldingArc active={active} reducedMotion={reducedMotion} />
+  </group>;
+}
 
 function createJointStates(): JointState[] {
   return jointLimits.map((limit, index) => ({ ...limit, current: stationPose("arrival")[index], velocity: 0 }));
@@ -164,46 +235,65 @@ export function RobotArm({ station }: { station: Station }) {
   const axis4 = useRef<THREE.Group>(null);
   const axis5 = useRef<THREE.Group>(null);
   const axis6 = useRef<THREE.Group>(null);
-  const robotBasePosition = useRef(new THREE.Vector3());
-  const cameraDirection = useRef(new THREE.Vector3());
   const joints = useRef<JointState[]>(createJointStates());
-  const idle = useRef({ nextChange: 5, activeAxis: -1, amount: 0 });
+  const cycle = useRef({ phaseIndex: 0, phaseElapsed: 0 });
+  const lastStatus = useRef("STANDBY/READY");
+  const lastWelding = useRef(false);
+  const [reducedMotion, setReducedMotion] = useState(false);
+  const [weldingActive, setWeldingActive] = useState(false);
+  const [workcellStatus, setWorkcellStatus] = useState<WorkcellStatus>({ mode: "STANDBY", status: "READY" });
+  const homePose = stationPose(station);
 
-  useFrame(({ clock, pointer, camera }, delta) => {
-    const time = clock.elapsedTime;
+  useEffect(() => {
+    const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const updatePreference = () => setReducedMotion(preference.matches);
+    updatePreference();
+    preference.addEventListener("change", updatePreference);
+    return () => preference.removeEventListener("change", updatePreference);
+  }, []);
+
+  useFrame(({ clock }, delta) => {
     const deltaTime = Math.min(delta, 0.05);
     if (!root.current || !baseJoint.current || !axis2.current || !axis3.current || !axis4.current || !axis5.current || !axis6.current) return;
-    if (time >= idle.current.nextChange) {
-      if (idle.current.activeAxis >= 0) idle.current.amount = 0;
-      idle.current.activeAxis = idle.current.activeAxis === 2 ? 4 : 2;
-      idle.current.amount = idle.current.activeAxis === 2 ? 0.035 : -0.045;
-      idle.current.nextChange = time + 5.5;
+
+    let targets: JointPose;
+    let status: WorkcellStatus;
+    let welding = false;
+
+    if (reducedMotion) {
+      targets = homePose;
+      status = { mode: "STANDBY", status: "READY" };
+    } else {
+      cycle.current.phaseElapsed += deltaTime;
+      let phase = weldCycle[cycle.current.phaseIndex];
+      while (cycle.current.phaseElapsed >= phase.duration) {
+        cycle.current.phaseElapsed -= phase.duration;
+        cycle.current.phaseIndex = (cycle.current.phaseIndex + 1) % weldCycle.length;
+        phase = weldCycle[cycle.current.phaseIndex];
+      }
+      const progress = THREE.MathUtils.clamp(cycle.current.phaseElapsed / phase.duration, 0, 1);
+      const easedProgress = progress * progress * (3 - 2 * progress);
+      targets = interpolatePose(poseFor(phase.from, homePose), poseFor(phase.to, homePose), easedProgress);
+      if (phase.from === "home" && phase.to === "home") {
+        targets[1] += Math.sin(clock.elapsedTime * 0.48) * 0.009;
+        targets[4] += Math.sin(clock.elapsedTime * 0.34) * 0.006;
+      }
+      status = { mode: phase.mode, status: phase.status };
+      welding = Boolean(phase.welding);
     }
-    const targets = [...stationPose(station)];
-    baseJoint.current.getWorldPosition(robotBasePosition.current);
-    cameraDirection.current.subVectors(camera.position, robotBasePosition.current);
-    cameraDirection.current.y = 0;
-    const cameraAngle = Math.atan2(cameraDirection.current.x, cameraDirection.current.z);
-    const cameraPoseDelta = Math.atan2(Math.sin(cameraAngle - targets[0]), Math.cos(cameraAngle - targets[0]));
-    targets[0] = cameraAngle;
-    targets[1] += THREE.MathUtils.clamp(cameraPoseDelta * 0.08, -0.12, 0.12);
-    targets[2] += THREE.MathUtils.clamp(Math.abs(cameraPoseDelta) * 0.06, 0, 0.09);
-    targets[3] += THREE.MathUtils.clamp(cameraPoseDelta * 0.12, -0.14, 0.14);
-    targets[4] += THREE.MathUtils.clamp(-cameraPoseDelta * 0.08, -0.1, 0.1);
-    targets[5] += THREE.MathUtils.clamp(cameraPoseDelta * 0.16, -0.16, 0.16);
-    if (idle.current.activeAxis >= 0) targets[idle.current.activeAxis] += idle.current.amount;
-    targets[4] += pointer.y * 0.025;
-    targets[5] += pointer.x * 0.02;
-    const angles = joints.current.map((joint, index) => advanceJoint(joint, targets[index], deltaTime));
-    baseJoint.current.rotation.y = angles[0];
-    axis2.current.rotation.z = angles[1];
-    axis3.current.rotation.z = angles[2];
-    axis4.current.rotation.y = angles[3];
-    axis5.current.rotation.z = angles[4];
-    axis6.current.rotation.y = angles[5];
+
+    publishWorkcellStatus(lastStatus, setWorkcellStatus, status);
+    if (lastWelding.current !== welding) {
+      lastWelding.current = welding;
+      setWeldingActive(welding);
+    }
+    const angles = joints.current.map((joint, index) => advanceJoint(joint, targets[index], deltaTime)) as JointPose;
+    applyRobotPose([baseJoint.current, axis2.current, axis3.current, axis4.current, axis5.current, axis6.current], angles);
   });
 
-  return <group ref={root} position={[0, 0.68, 0]}>
+  return <>
+    <WeldingWorkcell status={workcellStatus} />
+    <group ref={root} position={[0, 0.68, 0]}>
     <group ref={baseJoint}>
     <Cylinder args={[0.96, 1.06, 0.16, 48]} castShadow><meshStandardMaterial color="#70756e" metalness={0.8} roughness={0.28} /></Cylinder>
     <mesh position={[0, 0.1, 0]} castShadow><torusGeometry args={[0.82, 0.055, 10, 40]} /><meshStandardMaterial color="#a3a49b" metalness={0.9} roughness={0.24} /></mesh>
@@ -254,7 +344,9 @@ export function RobotArm({ station }: { station: Station }) {
                 <mesh position={[0.12, 0.64, 0]} rotation={[0, 0, -0.32]} castShadow><boxGeometry args={[0.08, 0.38, 0.09]} /><meshStandardMaterial color="#d3cfbe" metalness={0.64} roughness={0.28} /></mesh>
                 <mesh position={[-0.12, 0.64, 0]} rotation={[0, 0, 0.32]} castShadow><boxGeometry args={[0.08, 0.38, 0.09]} /><meshStandardMaterial color="#d3cfbe" metalness={0.64} roughness={0.28} /></mesh>
                 <AxisLabel position={[0.28, 0.55, 0]} value="A6" />
-                <RoundedBox args={[0.24, 0.06, 0.28]} radius={0.015} smoothness={2} position={[0, 0.76, 0]}><meshStandardMaterial color="#c27a37" metalness={0.65} roughness={0.3} /></RoundedBox>
+                <group name="welding-torch" position={[0, 0.7, 0]}>
+                  <WeldingTorch active={weldingActive} reducedMotion={reducedMotion} />
+                </group>
               </group>
             </group>
           </group>
@@ -264,5 +356,6 @@ export function RobotArm({ station }: { station: Station }) {
     <CableBundle />
     <Text position={[0.76, 0.66, 0.12]} rotation={[0, -0.18, 0]} fontSize={0.055} color="#d09a5b" anchorX="center" letterSpacing={0.04}>CAUTION</Text>
     </group>
-  </group>;
+    </group>
+  </>;
 }
